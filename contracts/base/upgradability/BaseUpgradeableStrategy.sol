@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "./BaseUpgradeableStrategyStorage.sol";
 import "../inheritance/ControllableInit.sol";
 import "../interface/IController.sol";
-import "../interface/IFeeRewardForwarderV6.sol";
+import "../interface/IFeeRewardForwarder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -115,7 +115,7 @@ contract BaseUpgradeableStrategy is Initializable, ControllableInit, BaseUpgrade
       IERC20(rewardToken()).safeApprove(forwarder, 0);
       IERC20(rewardToken()).safeApprove(forwarder, _rewardBalance);
 
-      IFeeRewardForwarderV6(forwarder).notifyFeeAndBuybackAmounts(
+      IFeeRewardForwarder(forwarder).notifyFeeAndBuybackAmounts(
         rewardToken(),
         feeAmount,
         pool,

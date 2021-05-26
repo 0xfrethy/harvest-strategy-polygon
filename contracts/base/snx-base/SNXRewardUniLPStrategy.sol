@@ -7,10 +7,10 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../StrategyBase.sol";
-import "../interface/uniswap/IUniswapV2Router02.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "../interface/IVault.sol";
 import "./interfaces/SNXRewardInterface.sol";
-import "../interface/uniswap/IUniswapV2Pair.sol";
 
 /*
 *   This is a general strategy for yields that are based on the synthetix reward contract

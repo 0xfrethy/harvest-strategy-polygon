@@ -10,7 +10,8 @@ module.exports = {
     hardhat: {
       chainId: 137,
       forking: {
-        url: "https://rpc-mainnet.maticvigil.com",
+        url: "https://matic-mainnet.chainstacklabs.com",
+        // blockNumber: 14953296, // <-- edit here
       },
     },
     matic: {

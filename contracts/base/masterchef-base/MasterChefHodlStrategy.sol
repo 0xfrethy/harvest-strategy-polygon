@@ -5,11 +5,11 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "../interface/uniswap/IUniswapV2Router02.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "../interface/IVault.sol";
 import "../upgradability/BaseUpgradeableStrategy.sol";
 import "./interfaces/IMasterChef.sol";
-import "../interface/uniswap/IUniswapV2Pair.sol";
 import "../PotPool.sol";
 
 contract MasterChefHodlStrategy is BaseUpgradeableStrategy {

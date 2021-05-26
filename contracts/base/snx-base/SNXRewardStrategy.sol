@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./interfaces/SNXRewardInterface.sol";
 import "../StrategyBase.sol";
-import "../interface/uniswap/IUniswapV2Router02.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 contract SNXRewardStrategy is StrategyBase {
 
