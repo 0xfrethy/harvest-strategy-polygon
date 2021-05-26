@@ -1,16 +1,17 @@
+//SPDX-License-Identifier: Unlicense
+
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../interface/uniswap/IUniswapV2Router02.sol";
-import "../interface/IStrategy.sol";
 import "../interface/IVault.sol";
 import "../upgradability/BaseUpgradeableStrategy.sol";
 import "./interfaces/IMasterChef.sol";
 import "../interface/uniswap/IUniswapV2Pair.sol";
 
-contract MasterChefStrategy is IStrategy, BaseUpgradeableStrategy {
+contract MasterChefStrategy is BaseUpgradeableStrategy {
 
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
@@ -76,7 +77,7 @@ contract MasterChefStrategy is IStrategy, BaseUpgradeableStrategy {
     setBoolean(_IS_LP_ASSET_SLOT, _isLpAsset);
   }
 
-  function depositArbCheck() public view returns(bool) {
+  function depositArbCheck() public pure returns(bool) {
     return true;
   }
 

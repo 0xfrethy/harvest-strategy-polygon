@@ -1,3 +1,5 @@
+//SPDX-License-Identifier: Unlicense
+
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/Math.sol";
@@ -85,7 +87,7 @@ contract SNXRewardUniLPStrategy is StrategyBase {
     rewardPool = SNXRewardInterface(_rewardPool);
   }
 
-  function depositArbCheck() public view returns(bool) {
+  function depositArbCheck() public pure returns(bool) {
     return true;
   }
 
