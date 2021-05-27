@@ -2,7 +2,7 @@ const makeVault = require("./make-vault.js");
 const addresses = require("../test-config.js");
 const IController = artifacts.require("IController");
 const IFeeRewardForwarder = artifacts.require("IFeeRewardForwarder");
-const IQuickRouter = artifacts.require("IUniswapV2Router02");
+const IUniswapV2Router02 = artifacts.require("IUniswapV2Router02");
 const IERC20 = artifacts.require("IERC20");
 const IWETH = artifacts.require("IWETH");
 
@@ -78,7 +78,7 @@ async function setupCoreProtocol(config) {
   // if reward pool is required, then deploy it
   if(config.rewardPool != null && config.existingRewardPoolAddress == null) {
     const rewardTokens = config.rewardPoolConfig.rewardTokens || [addresses.FARM];
-    const rewardDistributions = [config.governance];
+    const rewardDistributions = [config.governance, feeRewardForwarderNew.address];
     if (config.feeRewardForwarder) {
       rewardDistributions.push(config.feeRewardForwarder);
     }
@@ -191,8 +191,8 @@ async function depositVault(_farmer, _underlying, _vault, _amount) {
   await _vault.deposit(_amount, { from: _farmer });
 }
 
-async function swapMaticToToken(_farmer, _path, _amountMatic) {
-  router = await IQuickRouter.at(addresses.QuickRouter);
+async function swapMaticToToken(_farmer, _path, _amountMatic, _router) {
+  router = await IUniswapV2Router02.at(_router);
   await router.swapExactETHForTokens(
     0,
     _path,
@@ -206,8 +206,8 @@ async function wrapMatic(_farmer, _amount) {
   await wmatic.deposit({value:_amount, from:_farmer});
 }
 
-async function addLiquidity(_farmer, _token0, _token1, _amount0, _amount1) {
-  router = await IQuickRouter.at(addresses.QuickRouter);
+async function addLiquidity(_farmer, _token0, _token1, _amount0, _amount1, _router) {
+  router = await IUniswapV2Router02.at(_router);
   if (_token0 == "Matic") {
     wrapMatic(_farmer, _amount0);
     _token0 = await IERC20.at(addresses.wMatic);

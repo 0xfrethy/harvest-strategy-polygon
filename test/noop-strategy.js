@@ -40,7 +40,12 @@ describe("No-op Strategy test", function() {
   }
 
   async function setupBalance(){
-    await swapMaticToToken(farmer1, [addresses.wMatic, underlying.address], "1000" + "000000000000000000");
+    await swapMaticToToken (
+      farmer1,
+      [addresses.wMatic, underlying.address],
+      "1000" + "000000000000000000",
+      addresses.QuickRouter
+    );
     farmerBalance = await underlying.balanceOf(farmer1);
   }
 
