@@ -22,16 +22,17 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
 
   // additional storage slots (on top of BaseUpgradeableStrategy ones) are defined here
   bytes32 internal constant _POOLID_SLOT = 0x3fd729bfa2e28b7806b03a6e014729f59477b530f995be4d51defc9dad94810b;
-  bytes32 internal constant _USE_UNI_SLOT = 0x1132c1de5e5b6f1c4c7726265ddcf1f4ae2a9ecf258a0002de174248ecbf2c7a;
   bytes32 internal constant _IS_LP_ASSET_SLOT = 0xc2f3dabf55b1bdda20d5cf5fcba9ba765dfc7c9dbaf28674ce46d43d60d58768;
+  bytes32 internal constant _SECOND_REWARD_TOKEN_SLOT = 0xd06e5f1f8ce4bdaf44326772fc9785917d444f120d759a01f1f440e0a42d67a3;
 
   // this would be reset on each upgrade
   mapping (address => address[]) public uniswapRoutes;
+  address[] public secondRewardRoute;
 
   constructor() public BaseUpgradeableStrategy() {
     assert(_POOLID_SLOT == bytes32(uint256(keccak256("eip1967.strategyStorage.poolId")) - 1));
-    assert(_USE_UNI_SLOT == bytes32(uint256(keccak256("eip1967.strategyStorage.useUni")) - 1));
     assert(_IS_LP_ASSET_SLOT == bytes32(uint256(keccak256("eip1967.strategyStorage.isLpAsset")) - 1));
+    assert(_SECOND_REWARD_TOKEN_SLOT == bytes32(uint256(keccak256("eip1967.strategyStorage.secondRewardToken")) - 1));
   }
 
   function initializeStrategy(
@@ -40,9 +41,9 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
     address _vault,
     address _rewardPool,
     address _rewardToken,
+    address _secondRewardToken,
     uint256 _poolID,
-    bool _isLpAsset,
-    bool _useUni
+    bool _isLpAsset
   ) public initializer {
 
     BaseUpgradeableStrategy.initialize(
@@ -58,10 +59,12 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
       12 hours // implementation change delay
     );
 
-    // address _lpt;
-    // (_lpt,,,) = IMiniChefV2(rewardPool()).lpToken(_poolID);
-    // require(_lpt == underlying(), "Pool Info does not match underlying");
+    IERC20 _lpt;
+    _lpt = IMiniChefV2(rewardPool()).lpToken(_poolID);
+    require(address(_lpt) == underlying(), "Pool Info does not match underlying");
     _setPoolId(_poolID);
+
+    _setSecondRewardToken(_secondRewardToken);
 
     if (_isLpAsset) {
       address uniLPComponentToken0 = IUniswapV2Pair(underlying()).token0();
@@ -74,7 +77,6 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
       uniswapRoutes[underlying()] = new address[](0);
     }
 
-    setBoolean(_USE_UNI_SLOT, _useUni);
     setBoolean(_IS_LP_ASSET_SLOT, _isLpAsset);
   }
 
@@ -89,7 +91,7 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
   function exitRewardPool() internal {
       uint256 bal = rewardPoolBalance();
       if (bal != 0) {
-          IMiniChefV2(rewardPool()).withdraw(poolId(), bal, address(this));
+          IMiniChefV2(rewardPool()).withdrawAndHarvest(poolId(), bal, address(this));
       }
   }
 
@@ -98,6 +100,10 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
       if (bal != 0) {
           IMiniChefV2(rewardPool()).emergencyWithdraw(poolId(), address(this));
       }
+  }
+
+  function harvestReward() internal {
+      IMiniChefV2(rewardPool()).harvest(poolId(), address(this));
   }
 
   function unsalvagableTokens(address token) public view returns (bool) {
@@ -135,6 +141,21 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
 
   // We assume that all the tradings can be done on Uniswap
   function _liquidateReward() internal {
+    // we can accept 1 as minimum because this is called only by a trusted role
+    uint256 amountOutMin = 1;
+
+    // swap second reward token to reward token
+    uint256 secondRewardBalance = IERC20(rewardToken()).balanceOf(address(this));
+    if (secondRewardBalance > 0) {
+      IUniswapV2Router02(sushiswapRouterV2).swapExactTokensForTokens(
+        secondRewardBalance,
+        amountOutMin,
+        secondRewardRoute,
+        address(this),
+        block.timestamp
+      );
+    }
+
     uint256 rewardBalance = IERC20(rewardToken()).balanceOf(address(this));
     if (!sell() || rewardBalance < sellFloor()) {
       // Profits can be disabled for possible simplified and rapid exit
@@ -152,9 +173,6 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
     // allow Uniswap to sell our reward
     IERC20(rewardToken()).safeApprove(sushiswapRouterV2, 0);
     IERC20(rewardToken()).safeApprove(sushiswapRouterV2, remainingRewardBalance);
-
-    // we can accept 1 as minimum because this is called only by a trusted role
-    uint256 amountOutMin = 1;
 
     if (isLpAsset()) {
       address uniLPComponentToken0 = IUniswapV2Pair(underlying()).token0();
@@ -301,7 +319,7 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
   *   when the investing is being paused by governance.
   */
   function doHardWork() external onlyNotPausedInvesting restricted {
-    exitRewardPool();
+    harvestReward();
     _liquidateReward();
     investAllUnderlying();
   }
@@ -330,12 +348,13 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
     return getUint256(_POOLID_SLOT);
   }
 
-  function setUseUni(bool _value) public onlyGovernance {
-    setBoolean(_USE_UNI_SLOT, _value);
+  // complexRewarder second reward
+  function _setSecondRewardToken(address _address) internal {
+    setAddress(_SECOND_REWARD_TOKEN_SLOT, _address);
   }
 
-  function useUni() public view returns (bool) {
-    return getBoolean(_USE_UNI_SLOT);
+  function secondRewardToken() public view returns (address) {
+    return getAddress(_SECOND_REWARD_TOKEN_SLOT);
   }
 
   function isLpAsset() public view returns (bool) {
