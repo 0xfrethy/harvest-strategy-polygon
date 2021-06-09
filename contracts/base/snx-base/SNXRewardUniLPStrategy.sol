@@ -127,10 +127,7 @@ contract SNXRewardUniLPStrategy is StrategyBase {
     notifyProfitInRewardToken(rewardBalance);
     uint256 remainingRewardBalance = IERC20(rewardToken).balanceOf(address(this));
 
-    if (remainingRewardBalance > 0 // we have tokens to swap
-      && uniswapRoutes[address(uniLPComponentToken0)].length > 0 // and we have a route to do the swap
-      && uniswapRoutes[address(uniLPComponentToken1)].length > 0 // and we have a route to do the swap
-    ) {
+    if (remainingRewardBalance > 0) {
 
       // allow Uniswap to sell our reward
       uint256 amountOutMin = 1;
