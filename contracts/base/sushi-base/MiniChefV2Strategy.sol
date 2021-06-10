@@ -35,7 +35,7 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
     assert(_SECOND_REWARD_TOKEN_SLOT == bytes32(uint256(keccak256("eip1967.strategyStorage.secondRewardToken")) - 1));
   }
 
-  function initializeStrategy(
+  function initializeBaseStrategy(
     address _storage,
     address _underlying,
     address _vault,
@@ -145,7 +145,12 @@ contract MiniChefV2Strategy is BaseUpgradeableStrategy {
     uint256 amountOutMin = 1;
 
     // swap second reward token to reward token
-    uint256 secondRewardBalance = IERC20(rewardToken()).balanceOf(address(this));
+    uint256 secondRewardBalance = IERC20(secondRewardToken()).balanceOf(address(this));
+
+    // allow Uniswap to sell our reward
+    IERC20(secondRewardToken()).safeApprove(sushiswapRouterV2, 0);
+    IERC20(secondRewardToken()).safeApprove(sushiswapRouterV2, secondRewardBalance);
+
     if (secondRewardBalance > 0) {
       IUniswapV2Router02(sushiswapRouterV2).swapExactTokensForTokens(
         secondRewardBalance,
